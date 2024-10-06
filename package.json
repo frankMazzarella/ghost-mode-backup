@@ -4,8 +4,12 @@
   "description": "Automatic backup script for ghost mode",
   "main": "src/app.js",
   "scripts": {
-    "start": "node ."
+    "start": "node .",
+    "nodemon": "nodemon ."
   },
   "author": "Frank Mazzarella <mazzarella.frank@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "nodemon": "^3.1.7"
+  }
 }
