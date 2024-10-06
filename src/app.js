@@ -8,7 +8,12 @@ const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
 const getDestinationDir = () => {
   const now = new Date();
-  return `${BACKUP_DIR}\\${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}T${now.getHours()}-${now.getMinutes()}-${now.getSeconds().toString().padStart(2, 0)}\\${basename(SOURCE_DIR)}`
+  const dateStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+  const hours = `${now.getHours().toString().padStart(2, 0)}`;
+  const minutes = `${now.getMinutes().toString().padStart(2, 0)}`;
+  const seconds = `${now.getSeconds().toString().padStart(2, 0)}`;
+  const timeStr = `${hours}-${minutes}-${seconds}`;
+  return `${BACKUP_DIR}\\${dateStr}T${timeStr}\\${basename(SOURCE_DIR)}`;
 }
 
 const copySaveGame = async () => {
