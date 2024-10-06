@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Automatic backup script for ghost mode",
   "main": "src/app.js",
+  "type": "module",
   "scripts": {
     "start": "node .",
     "nodemon": "nodemon ."
