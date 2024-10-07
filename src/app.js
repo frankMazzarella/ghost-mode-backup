@@ -1,12 +1,12 @@
 const { cp, stat, writeFile, readFile } = require("node:fs/promises");
 const { basename } = require("node:path");
+const { createInterface } = require("node:readline");
 
 let config;
 
 // TODO: should probably be using path.join
 // TODO: copy wildlands only 1771 (ubisoft version) or 3559 (steam version)
 // TODO: assume user id if only one exists
-// TODO: dialog will close without waiting for user input
 
 const defaultConfigData = {
   backupIntervalMinutes: 15,
@@ -31,6 +31,17 @@ const initialize = async () => {
     await createConfigFile();
     console.warn("make sure to edit config.json and add the correct user id");
   }
+  pressEnterToClose();
+};
+
+const pressEnterToClose = () => {
+  const readline = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  readline.question("press enter to close", () => {
+    readline.close();
+  });
 };
 
 const getConfigDataValid = async () => {
