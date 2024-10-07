@@ -4,12 +4,15 @@ import { basename } from "node:path";
 let config;
 
 // TODO: should probably be using path.join
+// TODO: copy wildlands only 1771 (ubisoft version) or 3559 (steam version)
+// TODO: assume user id if only one exists
+// TODO: package into single exe
 
 const defaultConfigData = {
   backupIntervalMinutes: 15,
   sourceDir:
     "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\savegames",
-  gameId: "",
+  userId: "",
 };
 
 const initialize = async () => {
@@ -26,23 +29,19 @@ const initialize = async () => {
     }
   } else {
     await createConfigFile();
-    console.warn(
-      "make sure to edit config.json and add the correct wildlands game id"
-    );
+    console.warn("make sure to edit config.json and add the correct user id");
   }
 };
 
 const getConfigDataValid = async () => {
   if (!config.gameId) {
-    console.error(
-      "you must edit config.json and set the wildlands game id value"
-    );
+    console.error("you must edit config.json and set the user id value");
     return false;
   }
   try {
-    const data = await stat(getSourceDir());
+    await stat(getSourceDir());
   } catch {
-    console.error("wildlands game id value is not correct");
+    console.error("user id value is not correct");
     return false;
   }
   return true;
