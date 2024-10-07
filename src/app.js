@@ -1,12 +1,11 @@
-const { cp, stat, writeFile, readFile } = require("node:fs/promises");
-const { basename } = require("node:path");
-const { createInterface } = require("node:readline");
+const fs = require("node:fs/promises");
+const path = require("node:path");
+const readline = require("node:readline");
 
 let config;
 
 // TODO: should probably be using path.join
 // TODO: copy wildlands only 1771 (ubisoft version) or 3559 (steam version)
-// TODO: assume user id if only one exists
 
 const defaultConfigData = {
   backupIntervalMinutes: 15,
@@ -26,31 +25,36 @@ const initialize = async () => {
       );
       copySaveGame();
       setInterval(copySaveGame, config.backupIntervalMinutes * 60 * 1000);
+    } else {
+      pressEnterToClose();
     }
   } else {
     await createConfigFile();
     console.warn("make sure to edit config.json and add the correct user id");
+    pressEnterToClose();
   }
-  pressEnterToClose();
 };
 
 const pressEnterToClose = () => {
-  const readline = createInterface({
+  const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
-  readline.question("press enter to close", () => {
-    readline.close();
+  rl.question("press enter to close", () => {
+    rl.close();
   });
 };
 
 const getConfigDataValid = async () => {
-  if (!config.gameId) {
-    console.error("you must edit config.json and set the user id value");
-    return false;
+  if (!config.userId) {
+    const userIdSuccess = await tryToAssumeUserId();
+    if (!userIdSuccess) {
+      console.error("you must edit config.json and set the user id value");
+      return false;
+    }
   }
   try {
-    await stat(getSourceDir());
+    await fs.stat(getSourceDir());
   } catch {
     console.error("user id value is not correct");
     return false;
@@ -58,9 +62,19 @@ const getConfigDataValid = async () => {
   return true;
 };
 
+const tryToAssumeUserId = async () => {
+  const dir = await fs.readdir(config.sourceDir);
+  if (dir.length === 1) {
+    config.userId = dir[0];
+    console.log(`user id is not set - assuming ${config.userId}`);
+    return true;
+  }
+  return false;
+};
+
 const loadConfigData = async () => {
   try {
-    config = JSON.parse(await readFile("config.json"));
+    config = JSON.parse(await fs.readFile("config.json"));
   } catch (error) {
     console.error(error);
   }
@@ -68,7 +82,7 @@ const loadConfigData = async () => {
 
 const getConfigExists = async () => {
   try {
-    await stat("config.json");
+    await fs.stat("config.json");
     return true;
   } catch {
     console.log("config.json file does not exist");
@@ -78,7 +92,10 @@ const getConfigExists = async () => {
 
 const createConfigFile = async () => {
   try {
-    await writeFile("config.json", JSON.stringify(defaultConfigData, null, 2));
+    await fs.writeFile(
+      "config.json",
+      JSON.stringify(defaultConfigData, null, 2)
+    );
     console.log("config.json file has been created with default data");
   } catch (error) {
     console.error(error);
@@ -86,7 +103,7 @@ const createConfigFile = async () => {
 };
 
 const getSourceDir = () => {
-  return `${config.sourceDir}\\${config.gameId}`;
+  return `${config.sourceDir}\\${config.userId}`;
 };
 
 const getDestinationDir = () => {
@@ -96,16 +113,16 @@ const getDestinationDir = () => {
   const minutes = `${now.getMinutes().toString().padStart(2, 0)}`;
   const seconds = `${now.getSeconds().toString().padStart(2, 0)}`;
   const timeStr = `${hours}-${minutes}-${seconds}`;
-  return `backups\\${dateStr}T${timeStr}\\${basename(getSourceDir())}`;
+  return `backups\\${dateStr}T${timeStr}\\${path.basename(getSourceDir())}`;
 };
 
 const copySaveGame = async () => {
   try {
     const sourceDir = getSourceDir();
     const destinationDir = getDestinationDir();
-    await cp(sourceDir, destinationDir, { recursive: true });
+    await fs.cp(sourceDir, destinationDir, { recursive: true });
     console.log(
-      `FILES SUCCESSFULLY COPIED\n\tFROM: ${sourceDir}\n\t  TO: ${destinationDir}`
+      `\nFILES SUCCESSFULLY COPIED\n\tFROM: ${sourceDir}\n\t  TO: ${destinationDir}`
     );
   } catch (error) {
     console.error(error);
