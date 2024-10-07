@@ -7,8 +7,6 @@ const asciiArt = require("./asciiArt");
 const APP_VERSION = "v0.1.0";
 let config;
 
-// TODO: should probably be using path.join
-
 const defaultConfigData = {
   backupIntervalMinutes: 15,
   sourceDir:
@@ -154,7 +152,12 @@ const getDestinationDir = () => {
   const seconds = `${now.getSeconds().toString().padStart(2, 0)}`;
   const dateStr = `${now.getFullYear()}-${month}-${date}`;
   const timeStr = `${hours}-${minutes}-${seconds}`;
-  return `backups\\${dateStr}T${timeStr}\\${config.userId}\\${config.gameId}`;
+  return path.join(
+    "backups",
+    `${dateStr}T${timeStr}`,
+    config.userId,
+    config.gameId
+  );
 };
 
 const copySaveGame = async () => {
