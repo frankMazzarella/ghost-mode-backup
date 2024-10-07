@@ -50,7 +50,12 @@ const pressEnterToClose = () => {
 };
 
 const getConfigDataValid = async () => {
-  // TODO: maybe should be two functions, or three?
+  await validateUserId();
+  await validateGameId();
+  return true;
+};
+
+const validateUserId = async () => {
   if (!config.userId) {
     const userIdSuccess = await tryToAssumeUserId();
     if (!userIdSuccess) {
@@ -64,6 +69,9 @@ const getConfigDataValid = async () => {
     console.error("user id value is not correct");
     return false;
   }
+};
+
+const validateGameId = async () => {
   if (!config.gameId) {
     const gameIdSuccess = await tryToAssumeGameId();
     if (!gameIdSuccess) {
@@ -77,7 +85,6 @@ const getConfigDataValid = async () => {
     console.error("game id value is not correct");
     return false;
   }
-  return true;
 };
 
 const tryToAssumeUserId = async () => {
