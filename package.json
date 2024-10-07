@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node .",
     "nodemon": "nodemon .",
-    "build": "pkg . --targets node*-win-x64"
+    "build": "pkg . --targets node18-win-x64"
   },
   "author": "Frank Mazzarella <mazzarella.frank@gmail.com>",
   "license": "MIT",
