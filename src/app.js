@@ -2,6 +2,9 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const readline = require("node:readline");
 
+const asciiArt = require("./asciiArt");
+
+const APP_VERSION = "v0.1.0";
 let config;
 
 // TODO: should probably be using path.join
@@ -12,27 +15,31 @@ const defaultConfigData = {
   sourceDir:
     "C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\savegames",
   userId: "",
+  gameId: "",
 };
 
 const initialize = async () => {
+  asciiArt.printAsciiArt();
+  console.log(`launching drone from helicopter ${APP_VERSION}`);
   const configExists = await getConfigExists();
-  if (configExists) {
-    await loadConfigData();
-    const isConfigDataValid = await getConfigDataValid();
-    if (isConfigDataValid) {
-      console.log(
-        `starting savegame backup at ${config.backupIntervalMinutes} minute intervals`
-      );
-      copySaveGame();
-      setInterval(copySaveGame, config.backupIntervalMinutes * 60 * 1000);
-    } else {
-      pressEnterToClose();
-    }
-  } else {
+  if (!configExists) {
     await createConfigFile();
-    console.warn("make sure to edit config.json and add the correct user id");
+  }
+  await loadConfigData();
+  const isConfigDataValid = await getConfigDataValid();
+  if (isConfigDataValid) {
+    startBackupInterval();
+  } else {
     pressEnterToClose();
   }
+};
+
+const startBackupInterval = () => {
+  console.log(
+    `starting savegame backup at ${config.backupIntervalMinutes} minute intervals`
+  );
+  copySaveGame();
+  setInterval(copySaveGame, config.backupIntervalMinutes * 60 * 1000);
 };
 
 const pressEnterToClose = () => {
@@ -46,6 +53,7 @@ const pressEnterToClose = () => {
 };
 
 const getConfigDataValid = async () => {
+  // TODO: maybe should be two functions, or three?
   if (!config.userId) {
     const userIdSuccess = await tryToAssumeUserId();
     if (!userIdSuccess) {
@@ -54,9 +62,22 @@ const getConfigDataValid = async () => {
     }
   }
   try {
-    await fs.stat(getSourceDir());
+    await fs.stat(path.join(config.sourceDir, config.userId));
   } catch {
     console.error("user id value is not correct");
+    return false;
+  }
+  if (!config.gameId) {
+    const gameIdSuccess = await tryToAssumeGameId();
+    if (!gameIdSuccess) {
+      console.error("you must edit config.json and set the game id value");
+      return false;
+    }
+  }
+  try {
+    await fs.stat(path.join(config.sourceDir, config.userId, config.gameId));
+  } catch {
+    console.error("game id value is not correct");
     return false;
   }
   return true;
@@ -67,6 +88,29 @@ const tryToAssumeUserId = async () => {
   if (dir.length === 1) {
     config.userId = dir[0];
     console.log(`user id is not set - assuming ${config.userId}`);
+    return true;
+  }
+  return false;
+};
+
+const tryToAssumeGameId = async () => {
+  const ubisoftId = "1771";
+  const steamId = "3559";
+  const dir = await fs.readdir(path.join(config.sourceDir, config.userId));
+  if (dir.includes(ubisoftId) && dir.includes(steamId)) {
+    console.error(
+      "savegame directories for both versions exist - set one in config.json"
+    );
+    return false;
+  }
+  if (dir.includes(ubisoftId)) {
+    config.gameId = ubisoftId;
+    console.log(`game id is not set - assuming ${ubisoftId} (UBISOFT VERSION)`);
+    return true;
+  }
+  if (dir.includes(steamId)) {
+    config.gameId = steamId;
+    console.log(`game id is not set - assuming ${steamId} (STEAM VERSION)`);
     return true;
   }
   return false;
@@ -102,27 +146,25 @@ const createConfigFile = async () => {
   }
 };
 
-const getSourceDir = () => {
-  return `${config.sourceDir}\\${config.userId}`;
-};
-
 const getDestinationDir = () => {
   const now = new Date();
-  const dateStr = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+  const month = `${(now.getMonth() + 1).toString().padStart(2, 0)}`;
+  const date = `${now.getDate().toString().padStart(2, 0)}`;
   const hours = `${now.getHours().toString().padStart(2, 0)}`;
   const minutes = `${now.getMinutes().toString().padStart(2, 0)}`;
   const seconds = `${now.getSeconds().toString().padStart(2, 0)}`;
+  const dateStr = `${now.getFullYear()}-${month}-${date}`;
   const timeStr = `${hours}-${minutes}-${seconds}`;
-  return `backups\\${dateStr}T${timeStr}\\${path.basename(getSourceDir())}`;
+  return `backups\\${dateStr}T${timeStr}\\${config.userId}\\${config.gameId}`;
 };
 
 const copySaveGame = async () => {
   try {
-    const sourceDir = getSourceDir();
+    const sourceDir = path.join(config.sourceDir, config.userId, config.gameId);
     const destinationDir = getDestinationDir();
     await fs.cp(sourceDir, destinationDir, { recursive: true });
     console.log(
-      `\nFILES SUCCESSFULLY COPIED\n\tFROM: ${sourceDir}\n\t  TO: ${destinationDir}`
+      `\nFILES SUCCESSFULLY COPIED\n  FROM: ${sourceDir}\n    TO: ${destinationDir}`
     );
   } catch (error) {
     console.error(error);
