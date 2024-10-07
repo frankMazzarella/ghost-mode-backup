@@ -4,7 +4,7 @@ const readline = require("node:readline");
 
 const asciiArt = require("./asciiArt");
 
-const APP_VERSION = "v0.1.0";
+const APP_VERSION = "v1.0.0";
 let config;
 
 const defaultConfigData = {
