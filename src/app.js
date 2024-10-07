@@ -1,12 +1,12 @@
-import { cp, stat, writeFile, readFile } from "node:fs/promises";
-import { basename } from "node:path";
+const { cp, stat, writeFile, readFile } = require("node:fs/promises");
+const { basename } = require("node:path");
 
 let config;
 
 // TODO: should probably be using path.join
 // TODO: copy wildlands only 1771 (ubisoft version) or 3559 (steam version)
 // TODO: assume user id if only one exists
-// TODO: package into single exe
+// TODO: dialog will close without waiting for user input
 
 const defaultConfigData = {
   backupIntervalMinutes: 15,
