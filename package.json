@@ -1,9 +1,10 @@
 {
   "name": "ghost-mode-backup",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Automatic backup script for ghost mode",
   "main": "src/app.js",
   "bin": "src/app.js",
+  "type": "module",
   "scripts": {
     "start": "node .",
     "nodemon": "nodemon .",
@@ -15,5 +16,8 @@
     "nodemon": "^3.1.7",
     "pkg": "^5.8.1",
     "prettier": "3.3.3"
+  },
+  "dependencies": {
+    "log-update": "^6.1.0"
   }
 }

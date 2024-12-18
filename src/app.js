@@ -1,11 +1,14 @@
-const fs = require("node:fs/promises");
-const path = require("node:path");
-const readline = require("node:readline");
+import fs from "node:fs/promises";
+import path from "node:path";
+import readline from "node:readline";
+import logUpdate from "log-update";
 
-const asciiArt = require("./asciiArt");
+import { printAsciiArt } from "./asciiArt.js";
 
-const APP_VERSION = "v1.0.0";
+const APP_VERSION = "v1.1.0";
 let config;
+let nextBackuptime;
+let successMessage;
 
 const defaultConfigData = {
   backupIntervalMinutes: 15,
@@ -16,7 +19,7 @@ const defaultConfigData = {
 };
 
 const initialize = async () => {
-  asciiArt.printAsciiArt();
+  printAsciiArt();
   console.log(`launching drone from helicopter ${APP_VERSION}`);
   const configExists = await getConfigExists();
   if (!configExists) {
@@ -33,10 +36,24 @@ const initialize = async () => {
 
 const startBackupInterval = () => {
   console.log(
-    `starting savegame backup at ${config.backupIntervalMinutes} minute intervals`
+    `starting savegame backup at ${config.backupIntervalMinutes} minute intervals\n`
   );
   copySaveGame();
   setInterval(copySaveGame, config.backupIntervalMinutes * 60 * 1000);
+  setInterval(printStatus, 1000);
+};
+
+const printStatus = () => {
+  const now = new Date().getTime();
+  logUpdate(
+    `${successMessage}\n\nNext backup in ${msToMinutesAndSeconds(nextBackuptime - now)}`
+  );
+};
+
+const msToMinutesAndSeconds = (ms) => {
+  var minutes = Math.floor(ms / 60000);
+  var seconds = ((ms % 60000) / 1000).toFixed(0).padStart(2, 0);
+  return `${minutes}:${seconds}`;
 };
 
 const pressEnterToClose = () => {
@@ -168,13 +185,13 @@ const getDestinationDir = () => {
 };
 
 const copySaveGame = async () => {
+  nextBackuptime =
+    new Date().getTime() + config.backupIntervalMinutes * 60 * 1000;
   try {
     const sourceDir = path.join(config.sourceDir, config.userId, config.gameId);
     const destinationDir = getDestinationDir();
     await fs.cp(sourceDir, destinationDir, { recursive: true });
-    console.log(
-      `\nFILES SUCCESSFULLY COPIED\n  FROM: ${sourceDir}\n    TO: ${destinationDir}`
-    );
+    successMessage = `FILES SUCCESSFULLY COPIED (${new Date().toLocaleTimeString("en-US", { hour12: false })})\n  FROM: ${sourceDir}\n    TO: ${destinationDir}`;
   } catch (error) {
     console.error(error);
   }
