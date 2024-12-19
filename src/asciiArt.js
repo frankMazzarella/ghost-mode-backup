@@ -1,4 +1,4 @@
-export const printAsciiArt = () => {
+const printAsciiArt = () => {
   console.log(
     "                                                                            \n",
     "   BRAVO_THREE                                                              \n",
@@ -20,3 +20,5 @@ export const printAsciiArt = () => {
     "                                                                            \n"
   );
 };
+
+module.exports = { printAsciiArt };

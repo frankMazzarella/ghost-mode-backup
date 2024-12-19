@@ -1,11 +1,11 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import readline from "node:readline";
-import logUpdate from "log-update";
+const fs = require("node:fs/promises");
+const path = require("node:path");
+const readline = require("node:readline");
+const logUpdate = require("log-update");
 
-import { printAsciiArt } from "./asciiArt.js";
+const { printAsciiArt } = require("./asciiArt.js");
 
-const APP_VERSION = "v1.1.0";
+const APP_VERSION = "v1.1.1";
 let config;
 let nextBackuptime;
 let successMessage;
@@ -67,9 +67,13 @@ const pressEnterToClose = () => {
 };
 
 const getConfigDataValid = async () => {
-  await validateUserId();
-  await validateGameId();
-  return true;
+  try {
+    const userIdIsValid = await validateUserId();
+    const gameIdIsValid = await validateGameId();
+    return userIdIsValid && gameIdIsValid;
+  } catch {
+    return false;
+  }
 };
 
 const validateUserId = async () => {
@@ -79,6 +83,7 @@ const validateUserId = async () => {
       console.error("you must edit config.json and set the user id value");
       return false;
     }
+    return true;
   }
   try {
     await fs.stat(path.join(config.sourceDir, config.userId));
@@ -95,6 +100,7 @@ const validateGameId = async () => {
       console.error("you must edit config.json and set the game id value");
       return false;
     }
+    return true;
   }
   try {
     await fs.stat(path.join(config.sourceDir, config.userId, config.gameId));
@@ -194,6 +200,7 @@ const copySaveGame = async () => {
     successMessage = `FILES SUCCESSFULLY COPIED (${new Date().toLocaleTimeString("en-US", { hour12: false })})\n  FROM: ${sourceDir}\n    TO: ${destinationDir}`;
   } catch (error) {
     console.error(error);
+    pressEnterToClose();
   }
 };
 
