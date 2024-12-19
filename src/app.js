@@ -68,6 +68,12 @@ const pressEnterToClose = () => {
 
 const getConfigDataValid = async () => {
   try {
+    if (
+      isNaN(config.backupIntervalMinutes) ||
+      config.backupIntervalMinutes < 0.1
+    ) {
+      config.backupIntervalMinutes = 15;
+    }
     const userIdIsValid = await validateUserId();
     const gameIdIsValid = await validateGameId();
     return userIdIsValid && gameIdIsValid;
